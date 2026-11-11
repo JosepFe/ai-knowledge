@@ -1,10 +1,14 @@
 {
   "knowledge_dirs": ["~/notes/Knowledge", "~/notes/Projects/Homelab"],
   "default_notes_dir": "~/notes/Knowledge/Inbox",
+  "notes_language": "English",
+  "note_conventions": "YAML frontmatter (title, tags); [[wikilinks]]; one topic per note; H2 sections",
   "save_with": "",
   "extra_rules": [
-    "Notes are written in Spanish."
+    "Never save employer or client data in the notes: concepts only, with neutral examples."
   ],
+  "session_rules": true,
+  "secret_scan": true,
   "weak_score": 4.0,
   "max_note_kb": 16
 }

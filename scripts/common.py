@@ -15,6 +15,10 @@ DEFAULTS = {
     "extra_rules": [],         # personal rules added to the session rules
     "weak_score": 4.0,         # top BM25 score below this counts as a weak search
     "max_note_kb": 16,         # notes above this size are flagged by --stats
+    "notes_language": "",      # language new notes are written in (e.g. "English", "Spanish")
+    "note_conventions": "",    # how notes look when there is no save_with skill (frontmatter, links, headings)
+    "session_rules": True,     # SessionStart hook adds the curation rules
+    "secret_scan": True,       # PostToolUse hook warns about exposed secrets
 }
 
 

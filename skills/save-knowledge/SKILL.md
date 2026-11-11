@@ -5,7 +5,7 @@ description: Save a verified, reusable fact or finding into the user's notes wit
 
 # Save knowledge
 
-Config: `~/.config/ai-knowledge/config.json`. If it names a skill in `save_with` (the user's own note conventions: folders, frontmatter, language, indexes), **follow that skill for where and how to write**, and apply the rules below on top. Otherwise write to `default_notes_dir`.
+Config: `~/.config/ai-knowledge/config.json`. If it names a skill in `save_with` (the user's own note conventions: folders, frontmatter, language, indexes), **follow that skill for where and how to write**, and apply the rules below on top. Otherwise write to `default_notes_dir`, in `notes_language`, following `note_conventions`. No config yet: suggest the `setup` skill.
 
 ## What to save
 

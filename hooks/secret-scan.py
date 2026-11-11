@@ -7,7 +7,10 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from common import state_file  # noqa: E402
+from common import load_config, state_file  # noqa: E402
+
+if not load_config()["secret_scan"]:
+    sys.exit(0)
 
 PATTERNS = {
     "GitHub token": r"\b(gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})",
