@@ -132,6 +132,7 @@ All local. Delete them any time.
 | `extra_rules` | `[]` | Your own always-on rules |
 | `session_rules`, `secret_scan` | `true` | Turn each hook on or off |
 | `weak_score` | `4.0` | Best search score below this counts as a knowledge gap |
+| `min_coverage` | `0.5` | With 2+ keywords, if no top-5 result holds this share of them, the search is weak (one common word scoring high is not an answer) |
 | `max_note_kb` | `16` | Notes above this size are flagged |
 | `exclude` | `.obsidian`, `.git`… | Folder names skipped when searching |
 
@@ -163,7 +164,7 @@ Uninstalling leaves your notes and `~/.config/ai-knowledge/` untouched; delete t
 |---|---|
 | "ai-knowledge is installed but not configured" | Run "set up ai-knowledge" |
 | Searches find nothing useful | Use the words your notes use (tool names, error text), in your notes' language; check `knowledge_dirs` |
-| Too many `WEAK` searches, or none | Adjust `weak_score` (`kb.py --misses` shows the history) |
+| Too many `WEAK` searches, or none | Adjust `weak_score` or `min_coverage` (`kb.py --misses` shows the history) |
 | `SECRET EXPOSED` on an example token | Expected when example text uses the real token format; rotate if it was real |
 | Hooks not running | `python3` must be on the `PATH` Claude Code sees; restart the session after installing |
 

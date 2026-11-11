@@ -81,19 +81,22 @@ def search(query, top):
                 idf = math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5))
                 s += idf * tf[t] * (k1 + 1) / (tf[t] + k1 * (1 - b + b * length / avg))
         if s > 0:
-            scored.append((s, p, start, head, lines))
+            scored.append((s, p, start, head, lines, sum(1 for t in set(q) if tf[t]) / len(set(q))))
     scored.sort(key=lambda x: -x[0])
     best = scored[0][0] if scored else 0.0
-    weak = best < CFG["weak_score"]
+    # A high score from one common word is not an answer: with 2+ keywords, some top result must hold half of them.
+    cover = max((x[5] for x in scored[:5]), default=0.0)
+    weak = best < CFG["weak_score"] or (len(set(q)) > 1 and cover < CFG.get("min_coverage", 0.5))
     with open(state_file("searches.log"), "a", encoding="utf-8") as f:
         f.write(f"{dt.datetime.now().isoformat(timespec='seconds')}\t{best:.2f}\t{'WEAK' if weak else 'ok'}\t{query}\n")
-    for s, p, start, head, lines in scored[:top]:
+    for s, p, start, head, lines, _ in scored[:top]:
         print(f"{s:6.2f}  {short(p)}:{start}  {head}")
         hits = [(i, l) for i, l in enumerate(lines) if set(tokens(l)) & set(q)][:3]
         for i, l in hits:
             print(f"        {start + i}: {l.strip()[:160]}")
     if weak:
-        print(f"\nWEAK: best score {best:.2f} < {CFG['weak_score']}. Try the words the notes would use, or research it and save the result.")
+        why = f"best score {best:.2f} < {CFG['weak_score']}" if best < CFG["weak_score"] else f"no top result holds half of the keywords (best {cover:.0%})"
+        print(f"\nWEAK: {why}. Try the words the notes would use, or research it and save the result.")
 
 
 def misses(days):

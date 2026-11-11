@@ -10,7 +10,7 @@
       "name": "ai-knowledge",
       "description": "Notes-first research, verified facts with sources and trust tags, stale-note refresh, duels and session review",
       "source": "./",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "category": "productivity",
       "tags": [
         "knowledge",
