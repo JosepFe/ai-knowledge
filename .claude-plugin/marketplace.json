@@ -1,0 +1,15 @@
+{
+  "name": "ai-knowledge",
+  "description": "AI Knowledge: knowledge management and research for Claude Code",
+  "owner": { "name": "JosepFe", "url": "https://github.com/JosepFe" },
+  "plugins": [
+    {
+      "name": "ai-knowledge",
+      "description": "Notes-first research, verified facts with sources and trust tags, stale-note refresh, duels and session review",
+      "source": "./",
+      "version": "1.0.0",
+      "category": "productivity",
+      "tags": ["knowledge", "research", "notes", "secrets"]
+    }
+  ]
+}

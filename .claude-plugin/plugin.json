@@ -1,0 +1,10 @@
+{
+  "name": "ai-knowledge",
+  "description": "Knowledge management and AI-config hygiene for Claude Code: notes-first BM25 search over your markdown notes, research with sources and trust tags, saving verified facts, refreshing stale notes, two-model duels, learning from past sessions, and a secret-exposure hook",
+  "version": "1.0.0",
+  "author": { "name": "JosepFe", "url": "https://github.com/JosepFe" },
+  "homepage": "https://github.com/JosepFe/ai-knowledge",
+  "repository": "https://github.com/JosepFe/ai-knowledge",
+  "license": "MIT",
+  "keywords": ["knowledge", "research", "notes", "obsidian", "rag", "bm25", "secrets"]
+}

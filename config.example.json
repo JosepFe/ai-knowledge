@@ -1,0 +1,10 @@
+{
+  "knowledge_dirs": ["~/notes/Knowledge", "~/notes/Projects/Homelab"],
+  "default_notes_dir": "~/notes/Knowledge/Inbox",
+  "save_with": "",
+  "extra_rules": [
+    "Notes are written in Spanish."
+  ],
+  "weak_score": 4.0,
+  "max_note_kb": 16
+}
