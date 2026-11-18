@@ -149,6 +149,7 @@ python3 $K/kb.py --misses 30              # weak searches in the last 30 days
 python3 $K/kb.py --stale 180              # notes not reviewed in 6 months + re-check/BROKEN facts
 python3 $K/kb.py --stats                  # oversized notes, long skills, always-on text
 python3 $K/sessions.py 2026-11-01         # digest of your sessions since a date
+python3 $K/usage.py 2026-11-01 --md       # tokens by model and project, active vs waiting time (numbers only)
 ```
 
 ## MCP servers and a new machine
