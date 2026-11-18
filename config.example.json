@@ -10,5 +10,6 @@
   "session_rules": true,
   "secret_scan": true,
   "weak_score": 4.0,
+  "weak_ratio": 0.3,
   "max_note_kb": 16
 }

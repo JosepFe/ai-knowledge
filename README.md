@@ -131,7 +131,8 @@ All local. Delete them any time.
 | `save_with` | `""` | Name of your own skill that writes notes your way; `save-knowledge` follows it |
 | `extra_rules` | `[]` | Your own always-on rules |
 | `session_rules`, `secret_scan` | `true` | Turn each hook on or off |
-| `weak_score` | `4.0` | Best search score below this counts as a knowledge gap |
+| `weak_score` | `4.0` | Upper limit: a best score below this counts as a knowledge gap |
+| `weak_ratio` | `0.3` | The bar is the lower of `weak_score` and this share of the best score the query could reach. Small collections score lower, so a fixed 4.0 would flag every search as weak |
 | `min_coverage` | `0.5` | With 2+ keywords, if no top-5 result holds this share of them, the search is weak (one common word scoring high is not an answer) |
 | `max_note_kb` | `16` | Notes above this size are flagged |
 | `exclude` | `.obsidian`, `.git`… | Folder names skipped when searching |

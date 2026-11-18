@@ -86,7 +86,10 @@ def search(query, top):
     best = scored[0][0] if scored else 0.0
     # A high score from one common word is not an answer: with 2+ keywords, some top result must hold half of them.
     cover = max((x[5] for x in scored[:5]), default=0.0)
-    weak = best < CFG["weak_score"] or (len(set(q)) > 1 and cover < CFG.get("min_coverage", 0.5))
+    # The best score a note can reach depends on the collection size (idf), so a fixed bar is out of reach in a small one.
+    best_possible = (k1 + 1) * sum(math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5)) for t in set(q) if df[t])
+    bar = min(CFG["weak_score"], CFG["weak_ratio"] * best_possible)
+    weak = best < bar or (len(set(q)) > 1 and cover < CFG.get("min_coverage", 0.5))
     with open(state_file("searches.log"), "a", encoding="utf-8") as f:
         f.write(f"{dt.datetime.now().isoformat(timespec='seconds')}\t{best:.2f}\t{'WEAK' if weak else 'ok'}\t{query}\n")
     for s, p, start, head, lines, _ in scored[:top]:
@@ -95,7 +98,7 @@ def search(query, top):
         for i, l in hits:
             print(f"        {start + i}: {l.strip()[:160]}")
     if weak:
-        why = f"best score {best:.2f} < {CFG['weak_score']}" if best < CFG["weak_score"] else f"no top result holds half of the keywords (best {cover:.0%})"
+        why = f"best score {best:.2f} < {bar:.2f}" if best < bar else f"no top result holds half of the keywords (best {cover:.0%})"
         print(f"\nWEAK: {why}. Try the words the notes would use, or research it and save the result.")
 
 

@@ -13,7 +13,8 @@ DEFAULTS = {
     "save_with": "",           # optional skill that knows the user's note format (e.g. "apunta-knowledge")
     "default_notes_dir": "",   # where new notes go when nothing fits
     "extra_rules": [],         # personal rules added to the session rules
-    "weak_score": 4.0,         # top BM25 score below this counts as a weak search
+    "weak_score": 4.0,         # top BM25 score below this counts as a weak search (upper bound)
+    "weak_ratio": 0.3,         # ...or below this share of the best score the query could reach (small collections)
     "min_coverage": 0.5,       # with 2+ keywords, a top-5 result must hold this share of them (else weak)
     "max_note_kb": 16,         # notes above this size are flagged by --stats
     "notes_language": "",      # language new notes are written in (e.g. "English", "Spanish")
