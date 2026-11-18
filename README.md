@@ -135,6 +135,7 @@ All local. Delete them any time.
 | `weak_ratio` | `0.3` | The bar is the lower of `weak_score` and this share of the best score the query could reach. Small collections score lower, so a fixed 4.0 would flag every search as weak |
 | `min_coverage` | `0.5` | With 2+ keywords, if no top-5 result holds this share of them, the search is weak (one common word scoring high is not an answer) |
 | `max_note_kb` | `16` | Notes above this size are flagged |
+| `ai_config_dir` | `""` | Path of your `ai-config` clone; used only by `mcp_status.py` |
 | `exclude` | `.obsidian`, `.git`… | Folder names skipped when searching |
 
 ## Command-line tools
@@ -149,6 +150,36 @@ python3 $K/kb.py --stale 180              # notes not reviewed in 6 months + re-
 python3 $K/kb.py --stats                  # oversized notes, long skills, always-on text
 python3 $K/sessions.py 2026-11-01         # digest of your sessions since a date
 ```
+
+## MCP servers and a new machine
+
+`scripts/mcp_status.py` is read-only. It lists the MCP servers defined in `ai-config` and shows whether each one is in Claude Code and whether its token file exists. It never reads or prints a token.
+
+```bash
+python3 $K/mcp_status.py          # needs "ai_config_dir" in config.json
+```
+
+Checklist for a new computer:
+
+1. Clone `ai-config` and run `node claude/install.js --mcp=common` (groups in `mcp/groups.json`).
+2. Install this plugin (`/plugin marketplace add JosepFe/ai-knowledge`, then `/plugin install ai-knowledge@ai-knowledge`) and run "set up ai-knowledge" to write this machine's paths.
+3. Save each token on this machine with `/secrets` or `mcp/set-mcp-secret.sh <server>`. Tokens are never copied between machines.
+4. Restart the session and run `/mcp`. `mcp_status.py` should show `yes` in both columns for the servers you use.
+
+## Secret entry panel (mods/secret-entry)
+
+`mods/secret-entry` is a Claude Code mod, not a skill. It adds a `/secrets` command that opens a panel to save one secret value into any file, for example a project's `.env`:
+
+1. Type the file path (absolute, WSL form such as `/mnt/c/...`).
+2. Type the variable name.
+3. Paste the value and press Enter.
+
+Only that variable changes; every other line of the file is kept, and the file is set to mode 600. The value never goes through the chat.
+
+- The MCP buttons fill the file and variable for a token in `ai-config/local/mcp`, with the same encoding as `mcp/set-mcp-secret.sh`.
+- The value field shows what you type, unlike the terminal prompt. Use the terminal script for anything you would rather not see on screen.
+- The MCP folder is hardcoded to `/mnt/c/Repos/ai-config/local/mcp`. Change `MCP_DIR` in `hooks/register.tsx` on another machine.
+- Loading it needs the mods setting turned on in Claude Code. Claude asks once.
 
 ## Updating and uninstalling
 
