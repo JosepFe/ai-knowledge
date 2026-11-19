@@ -7,6 +7,7 @@
 Needs `ai_config_dir` in ~/.config/ai-knowledge/config.json (the ai-config repo). Token files are checked for existence only; their contents are never read or printed.
 """
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -35,8 +36,22 @@ def claude_servers():
     return json.loads(path.read_text(encoding="utf-8")).get("mcpServers", {})
 
 
+NEW_DIR = Path(os.path.expanduser("~/.config/ai-knowledge/local/mcp"))
+
+
+def token_location(repo, name):
+    """Where the token file is: this plugin's folder, the ai-config folder, or nowhere."""
+    if (NEW_DIR / f"{name}.env").exists():
+        return "ai-knowledge"
+    if (repo / "local" / "mcp" / f"{name}.env").exists():
+        return "ai-config"
+    return False
+
+
 def rows():
-    repo = Path(CFG.get("ai_config_dir") or "").expanduser()
+    if not CFG.get("ai_config_dir"):
+        sys.exit(f"ai_config_dir is not set in {CONFIG}.")
+    repo = Path(CFG["ai_config_dir"]).expanduser()
     if not repo.is_dir():
         sys.exit(f"ai_config_dir not set or not found ({CONFIG}). Point it at your ai-config clone.")
     servers, group, claude = template(repo), groups(repo), claude_servers()
@@ -46,7 +61,7 @@ def rows():
             "server": name,
             "group": group.get(name, "-"),
             "in_claude_code": name in claude,
-            "token_file": (repo / "local" / "mcp" / f"{name}.env").exists(),
+            "token_file": token_location(repo, name),
         })
     return out
 
@@ -58,7 +73,7 @@ if __name__ == "__main__":
     else:
         print(f"{'server':16} {'group':14} {'claude':8} token")
         for r in data:
-            print(f"{r['server']:16} {r['group']:14} {'yes' if r['in_claude_code'] else 'no':8} {'yes' if r['token_file'] else 'no'}")
+            print(f"{r['server']:16} {r['group']:14} {'yes' if r['in_claude_code'] else 'no':8} {(r['token_file'] or 'no')}")
         missing = [r["server"] for r in data if not r["in_claude_code"]]
         if missing:
             print(f"\nNot in Claude Code: {', '.join(missing)}. Add with: node claude/install.js --mcp=<server>")
