@@ -97,6 +97,11 @@ Notes that go stale (versions, tools, comparisons) carry `Last reviewed: YYYY-MM
 | Skill | `knowledge-refresh` | Re-verify only notes past their review date or flagged `re-check` / `BROKEN` | "refresh my notes" |
 | Skill | `duel` | Two independent subagents (different models or stances), optional debate, a judge decides. About 3x the cost of one answer, so opt-in | "two opinions", "debate this" |
 | Skill | `config-review` | Mine past sessions for repeated work, your corrections, knowledge gaps, token waste and unused skills; ranked proposals | "what do we keep repeating?" |
+| Skill | `usage-report` | Tokens, time and process report from past sessions (by model, skill, subagent, branch, plugin version, leak signals), optional interactive HTML | "how many tokens did we use?", "compare periods" |
+| Skill | `release` | Choose major, minor or patch, write release notes from the commits since the last tag, and tag the merged commit after your approval | "new version", "release" |
+| Skill | `commits` | Conventional commit messages whose body feeds the release notes; never adds Claude attribution | "commit", "PR title" |
+| Skill | `languages` | Official practices and lint/format commands per language (C#, Go, TypeScript, Python, PowerShell/Bash, Terraform, Ansible) | "fix lint errors", "review this code" |
+| Skill | `troubleshooting-command-patterns` | Proven commands per technology (package managers, MCP in VS Code, TLS, WSL, PowerShell, parallel terminals) | "how do I X in Y", "an error seen before" |
 | Hook | SessionStart | Adds 4 short rules to each session: notes first, save what you verify, propose (don't apply) config changes, don't present unverified facts as verified. Plus your own rules | automatic |
 | Hook | PostToolUse | Warns `SECRET EXPOSED` when a token or private key appears in a tool call or its output; logs it masked (last 4 characters) | automatic |
 
