@@ -54,10 +54,11 @@ def ask_windows(label):
         win = lambda path: subprocess.run(["wslpath", "-w", str(path)], capture_output=True, text=True).stdout.strip()
         out = subprocess.run(
             ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-STA", "-File", win(script_file), win(label_file)],
-            capture_output=True, text=True, encoding="utf-8", check=False)
-        if out.returncode != 0 and out.stderr.strip():
-            sys.exit(f"Windows dialog failed: {out.stderr.strip()[:300]}")
-        return out.stdout.strip()
+            capture_output=True, check=False)
+        # The value is UTF-8 on stdout; PowerShell's error text uses another code page, so stderr is read loosely.
+        if out.returncode != 0:
+            sys.exit(f"Windows dialog failed: {out.stderr.decode('utf-8', 'replace').strip()[:300]}")
+        return out.stdout.decode("utf-8").strip()
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
