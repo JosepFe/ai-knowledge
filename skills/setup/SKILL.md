@@ -33,5 +33,6 @@ Skip code repos (a `.git` next to a README) unless the user says they keep notes
 ## 4. Write and test
 
 - Write the config (create the folder), with `~` expanded paths, `notes_language`, `note_conventions` (one or two lines describing the format found), `save_with` if any, `extra_rules` from question 5, `session_rules` and `secret_scan` from question 6. Show the file.
+- Create the secrets folder for MCP tokens, outside any repo: `mkdir -p -m 700 ~/.config/ai-knowledge/local/mcp`. Tokens are saved there with `/secrets`, one `<server>.env` per MCP, mode 600. Do not write any token here yourself; say so in one line.
 - Test: `python3 ../../scripts/kb.py <a word from one of their note titles> --top 3` and `python3 ../../scripts/kb.py --stats | head`. Show both.
 - Tell them: the hooks apply from the next session; try "do I have notes on <topic>?" or "research <question>"; re-run this skill any time to change the setup.

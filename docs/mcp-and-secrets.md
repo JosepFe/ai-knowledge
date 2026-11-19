@@ -25,7 +25,7 @@ A Claude Code mod, not a skill. It adds `/secrets`, a panel that saves one value
 
 Only that variable changes; the other lines are kept, and the file is set to mode 600. The value never goes through the chat.
 
-- The MCP buttons fill the file and variable for a token in `ai-config/local/mcp`, using the same encoding as `mcp/set-mcp-secret.sh`.
+- The MCP buttons fill the file and variable for a token in `~/.config/ai-knowledge/local/mcp/<server>.env`, using the same encoding as `mcp/set-mcp-secret.sh` in ai-config. The folder is created with mode 700 by `setup`, and it lives outside any repo.
 - The value field shows what you type. Use the terminal script for anything you would rather not see on screen.
-- The MCP folder is hardcoded in `hooks/register.tsx` (`MCP_DIR`). Change it on another machine.
+- The MCP servers still read their tokens from ai-config until their configuration points to this folder. That is a separate change in ai-config.
 - Loading it needs the mods setting turned on in Claude Code. Claude asks once.

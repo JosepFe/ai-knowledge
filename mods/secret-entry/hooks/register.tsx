@@ -2,7 +2,6 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 const PANE = 'secret-entry'
-const MCP_DIR = '/mnt/c/Repos/ai-config/local/mcp'
 
 // Presets fill the file and variable for an MCP token, with the same encoding as ai-config/mcp/set-mcp-secret.sh.
 const PRESETS = [
@@ -48,6 +47,9 @@ export const register: Register = on => {
     const file = await read($, target)
     const key = await read($, name)
     const message = await read($, status)
+    // Token files live in ai-knowledge's own folder, outside any repo.
+    const home = (await $.process.run(['sh', '-c', 'printf %s "$HOME"'])).stdout.trim()
+    const dir = `${home}/.config/ai-knowledge/local/mcp`
 
     const save = async (raw: string) => {
       const value = raw.trim()
@@ -55,7 +57,7 @@ export const register: Register = on => {
       if (value === '') return update($, status, () => 'Valor vacío: no se ha guardado nada.')
 
       // Presets only apply when the file is the MCP token file of that preset.
-      const preset = PRESETS.find(p => file === `${MCP_DIR}/${p.label}.env`)
+      const preset = PRESETS.find(p => file === `${dir}/${p.label}.env`)
       let text = ''
       try {
         text = await $.fs.read(file)
@@ -65,6 +67,7 @@ export const register: Register = on => {
 
       let updated = upsert(text, key, preset && 'base64' in preset ? btoa(`:${value}`) : value)
       if (preset && 'extra' in preset) updated = upsert(updated, preset.extra, value)
+      if (preset) await $.process.run(['mkdir', '-p', '-m', '700', dir])
       await $.fs.write(file, updated)
 
       const mode = await $.process.run(['chmod', '600', file])
@@ -81,7 +84,7 @@ export const register: Register = on => {
             <Button
               key={p.label}
               onPress={() => {
-                update($, target, () => `${MCP_DIR}/${p.label}.env`)
+                update($, target, () => `${dir}/${p.label}.env`)
                 update($, name, () => p.name)
               }}
             >
