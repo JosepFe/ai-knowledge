@@ -63,6 +63,8 @@ def main():
         try:
             scopes = checks[server](token)
             print(f"{server}: {level(scopes)} ({', '.join(scopes) or 'none'})")
+        except urllib.error.HTTPError as exc:
+            print(f"{server}: check failed (HTTP {exc.code}; 401 means the token is invalid or expired, 404 means the endpoint differs on this server)")
         except Exception as exc:
             print(f"{server}: check failed ({type(exc).__name__})")
     for name in sorted(p.stem for p in LOCAL.glob("*.env")):
