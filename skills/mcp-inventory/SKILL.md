@@ -40,8 +40,22 @@ Classify from the scopes in step 2 and from the server's tools:
 | write only | Rare. Check it is intended. |
 | not checked | Provider not verified by the script. |
 
-## 4. What to return
+## 4. Risk and the minimum scopes
 
-- A table: server, token present, access level, and the reason in a few words.
-- Servers with more access than their work needs, first, with the change to make (for example, a read-only token).
-- Do not change any token or configuration. Changes are proposals for Josep.
+For each token with a check, name the scopes that are broad and say what they allow:
+
+| Scope | Why it matters |
+|---|---|
+| `api` | Full API access: create, change and delete. Review first. |
+| `write_repository`, `write_registry`, `write_virtual_registry` | Pushes code and images. |
+| `self_rotate` | The token can replace itself. |
+| `ai_features`, `read_virtual_registry` | Narrower; say so only if relevant. |
+
+Then suggest the smallest set that matches the server's work. For a server that only reads, for example GitLab used for queries: `read_api` and `read_repository`. Only add write scopes if the work needs them, and say which work does.
+
+## 5. What to return
+
+- A table: server, token present, access level, risk (low, medium or high), and the reason in a few words.
+- The broad scopes found, one line each, and the minimum set suggested.
+- Servers with more access than their work needs, first.
+- Do not change any token or configuration. Changes are proposals for Josep: he creates the new token and saves it with `/secrets`, then revokes the old one.
