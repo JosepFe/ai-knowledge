@@ -10,3 +10,6 @@ Thumbs.db
 
 # Local reports with personal usage data (never publish)
 internal_docs/
+
+# Obsidian vault settings (not part of this plugin)
+.obsidian/
