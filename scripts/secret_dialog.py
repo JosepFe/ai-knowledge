@@ -17,14 +17,17 @@ from pathlib import Path
 WINDOWS_DIALOG = r"""
 Add-Type -AssemblyName System.Windows.Forms
 $f = New-Object System.Windows.Forms.Form
-$f.Text = 'ai-knowledge'; $f.Width = 440; $f.Height = 160; $f.StartPosition = 'CenterScreen'
+$f.Text = 'ai-knowledge'; $f.Width = 460; $f.Height = 240; $f.StartPosition = 'CenterScreen'
 $l = New-Object System.Windows.Forms.Label
-$l.Text = '__LABEL__'; $l.Left = 10; $l.Top = 10; $l.Width = 400
+$l.Text = '__LABEL__'; $l.Left = 10; $l.Top = 10; $l.Width = 430; $l.Height = 90
 $t = New-Object System.Windows.Forms.TextBox
-$t.UseSystemPasswordChar = $true; $t.Left = 10; $t.Top = 40; $t.Width = 400
+$t.UseSystemPasswordChar = $true; $t.Left = 10; $t.Top = 105; $t.Width = 430
+$c = New-Object System.Windows.Forms.CheckBox
+$c.Text = 'Mostrar lo que escribo'; $c.Left = 10; $c.Top = 140; $c.Width = 200
+$c.Add_CheckedChanged({ $t.UseSystemPasswordChar = -not $c.Checked })
 $b = New-Object System.Windows.Forms.Button
-$b.Text = 'Guardar'; $b.Left = 320; $b.Top = 75; $b.DialogResult = 'OK'
-$f.AcceptButton = $b; $f.Controls.AddRange(@($l, $t, $b))
+$b.Text = 'Guardar'; $b.Left = 340; $b.Top = 135; $b.DialogResult = 'OK'
+$f.AcceptButton = $b; $f.Controls.AddRange(@($l, $t, $c, $b))
 if ($f.ShowDialog() -eq 'OK') { [Console]::Out.Write($t.Text) }
 """
 
@@ -38,7 +41,8 @@ def is_wsl():
 
 def ask_secret(label):
     if is_wsl() and shutil.which("powershell.exe"):
-        script = WINDOWS_DIALOG.replace("__LABEL__", label.replace("'", "''"))
+        text = label.replace("\n", " · ").replace("'", "''")
+        script = WINDOWS_DIALOG.replace("__LABEL__", text)
         out = subprocess.run(["powershell.exe", "-NoProfile", "-STA", "-Command", script],
                              capture_output=True, text=True, check=False)
         return out.stdout.strip()

@@ -5,6 +5,16 @@ const PANE = 'secret-entry'
 // Where the native dialog script lives: the ai-knowledge repo. Change it if the repo is cloned elsewhere.
 const SECRET_DIALOG = '/mnt/c/Repos/josep-repos/ai-knowledge/scripts/secret_dialog.py'
 
+// What each MCP token is for, shown in the secure dialog. Keep it factual; scopes depend on the token you created.
+const INFO: Record<string, string> = {
+  gitlab: 'GitLab: MCP de repositorios, merge requests y pipelines. Token de acceso personal de GitLab.',
+  'grafana-dev': 'Grafana dev: MCP de métricas, logs y trazas del entorno de desarrollo. Token de service account.',
+  'grafana-prod': 'Grafana prod: MCP de métricas, logs y trazas de producción. Token de service account.',
+  jfrog: 'JFrog: MCP de artefactos. Token de acceso de JFrog.',
+  ado: 'Azure DevOps: MCP de work items y repos. Token personal (usa el campo Valor).',
+  vsphere: 'vSphere: MCP de inventario de máquinas virtuales. Contraseña del usuario (usa el campo Valor).',
+}
+
 // Presets fill the file and variable for an MCP token, with the same encoding as ai-config/mcp/set-mcp-secret.sh.
 const PRESETS = [
   { label: 'gitlab', name: 'GITLAB_PERSONAL_ACCESS_TOKEN' },
@@ -85,9 +95,9 @@ export const register: Register = on => {
       if (preset && ('base64' in preset || 'extra' in preset)) {
         return update($, status, () => 'Este preajuste necesita codificación: usa el campo Valor.')
       }
-      const run = await $.process.run([
-        'python3', SECRET_DIALOG, '--file', file, '--key', key, '--label', 'Pega el valor y pulsa Guardar',
-      ])
+      const service = preset ? INFO[preset.label] : 'Variable de un fichero de entorno.'
+      const label = `${service}\nArchivo: ${file}\nVariable: ${key}\nPega el valor y pulsa Guardar.`
+      const run = await $.process.run(['python3', SECRET_DIALOG, '--file', file, '--key', key, '--label', label])
       update($, status, () => (run.exitCode === 0 ? run.stdout.trim() : `No se guardó: ${run.stderr.trim() || 'cancelado'}`))
     }
 
