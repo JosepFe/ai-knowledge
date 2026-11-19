@@ -7,3 +7,6 @@ Thumbs.db
 .vscode/
 .env
 .env.*
+
+# Local reports with personal usage data (never publish)
+internal_docs/
