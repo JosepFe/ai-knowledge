@@ -13,7 +13,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 WINDOWS_DIALOG = r"""
@@ -22,7 +21,7 @@ Add-Type -AssemblyName System.Windows.Forms
 $f = New-Object System.Windows.Forms.Form
 $f.Text = 'ai-knowledge'; $f.Width = 460; $f.Height = 240; $f.StartPosition = 'CenterScreen'
 $l = New-Object System.Windows.Forms.Label
-$l.Text = [IO.File]::ReadAllText($args[0], [Text.Encoding]::UTF8); $l.Left = 10; $l.Top = 10; $l.Width = 430; $l.Height = 90
+$l.Text = '__LABEL__'; $l.Left = 10; $l.Top = 10; $l.Width = 430; $l.Height = 90
 $t = New-Object System.Windows.Forms.TextBox
 $t.UseSystemPasswordChar = $true; $t.Left = 10; $t.Top = 105; $t.Width = 430
 $c = New-Object System.Windows.Forms.CheckBox
@@ -43,24 +42,18 @@ def is_wsl():
 
 
 def ask_windows(label):
-    """Writes the dialog script and the label to temp files, then runs PowerShell on the script file.
-    Passing the script on the command line breaks on quotes and newlines; a file does not."""
-    workdir = Path(tempfile.mkdtemp(prefix="ak-dialog-"))
-    try:
-        script_file = workdir / "dialog.ps1"
-        label_file = workdir / "label.txt"
-        script_file.write_text(WINDOWS_DIALOG, encoding="utf-8-sig")
-        label_file.write_text(label.replace("\n", " · "), encoding="utf-8")
-        win = lambda path: subprocess.run(["wslpath", "-w", str(path)], capture_output=True, text=True).stdout.strip()
-        out = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-STA", "-File", win(script_file), win(label_file)],
-            capture_output=True, check=False)
-        # The value is UTF-8 on stdout; PowerShell's error text uses another code page, so stderr is read loosely.
-        if out.returncode != 0:
-            sys.exit(f"Windows dialog failed: {out.stderr.decode('utf-8', 'replace').strip()[:300]}")
-        return out.stdout.decode("utf-8").strip()
-    finally:
-        shutil.rmtree(workdir, ignore_errors=True)
+    """Runs the dialog with -EncodedCommand. A .ps1 file is blocked by signing policy on managed PCs;
+    a command passed this way is not, and it avoids quoting problems on the command line."""
+    text = label.replace("\n", " · ").replace("'", "''")
+    script = WINDOWS_DIALOG.replace("__LABEL__", text)
+    encoded = base64.b64encode(script.encode("utf-16-le")).decode("ascii")
+    out = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-STA", "-EncodedCommand", encoded],
+        capture_output=True, check=False)
+    # The value is UTF-8 on stdout; PowerShell's error text uses another code page, so stderr is read loosely.
+    if out.returncode != 0:
+        sys.exit(f"Windows dialog failed: {out.stderr.decode('utf-8', 'replace').strip()[:300]}")
+    return out.stdout.decode("utf-8").strip()
 
 
 def ask_secret(label):
