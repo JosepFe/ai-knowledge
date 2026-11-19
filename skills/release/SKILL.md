@@ -24,7 +24,13 @@ Pick one, say which and why in one line. If Josep already gave the version, use 
 
 ## 3. Write the release notes
 
-Group the commits by what changes for the user (new, changed, fixed). Keep only what changes how the repo is used; drop refactors, formatting and internal churn. One line per item, plain language, Spanish or English as the repo already uses. Mention breaking changes first.
+Write the notes in English, whatever language the commits use.
+
+- Group by section: `## Breaking changes` (first, if any), `## New`, `## Changed`, `## Fixed`. Leave out empty sections.
+- One bullet per item, each on its own line, starting with `- `. Never put several items on one line.
+- Each bullet is one plain sentence about what changes for the user. Put the name of the skill, command or setting in backticks.
+- Keep only what changes how the repo is used; drop refactors, formatting and internal churn.
+- Write the notes to a file and pass it with `--notes-file`. Do not put them inline in the command, because line breaks are lost.
 
 ## 4. Update the manifests
 
