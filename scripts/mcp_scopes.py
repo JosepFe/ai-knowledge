@@ -29,7 +29,8 @@ def read_var(path, name):
 
 
 def fetch(url, token, header):
-    req = urllib.request.Request(url, headers={header: f"Bearer {token}"})
+    value = token if header == "PRIVATE-TOKEN" else f"Bearer {token}"
+    req = urllib.request.Request(url, headers={header: value})
     with urllib.request.urlopen(req, timeout=10) as r:
         return r.headers, r.read()
 
