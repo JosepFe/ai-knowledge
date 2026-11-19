@@ -1,6 +1,6 @@
 {
   "name": "secret-entry",
   "version": "0.1.0",
-  "description": "Panel para guardar tokens de MCP en ai-config/local/mcp sin pasarlos por el chat",
+  "description": "Panel para guardar tokens de MCP en ~/.config/ai-knowledge/local/mcp sin pasarlos por el chat",
   "types": "./types/index.d.ts"
 }

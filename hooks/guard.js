@@ -26,7 +26,7 @@ process.stdin.on('data', d => (raw += d)).on('end', () => {
   if (/_write|update_dashboard|update_datasource|create_folder|create_datasource|exec_in_pod|port_forward|kubectl_generic/i.test(tool)) {
     decide('ask', `${tool} writes data or opens a session.`);
   }
-  if (!/replace|create|edit|write/i.test(tool) && /(ai-config|\.copilot|\.config[\\/]+ai-knowledge)[\\/]+local|\.ado-mcp\.env|\.mcp-auth|\.copilot[\\/]+(mcp-config\.json|mcp-oauth-config)|Code[\\/]+User[\\/]+mcp\.json|\.aws[\\/]+(credentials|sso)|Code[\\/]+User[\\/]+History/i.test(json)) {
+  if (!/replace|create|edit|write/i.test(tool) && /(\.copilot|\.config[\\/]+ai-knowledge)[\\/]+local|\.ado-mcp\.env|\.mcp-auth|\.copilot[\\/]+(mcp-config\.json|mcp-oauth-config)|Code[\\/]+User[\\/]+mcp\.json|\.aws[\\/]+(credentials|sso)|Code[\\/]+User[\\/]+History/i.test(json)) {
     decide('deny', 'secret files (MCP tokens, AWS credentials, VS Code history) are off-limits to the agent.');
   }
 
@@ -86,9 +86,7 @@ process.stdin.on('data', d => (raw += d)).on('end', () => {
   const gitOps = cmd.match(new RegExp(ask['git state change'].source + String.raw`[^|;&\r\n]*`, 'g')) || [];
   const trustedGit = gitOps.length > 0 && trusted.some(p => path.resolve(gitDir).startsWith(path.resolve(p)))
     && gitOps.every(s => /\s(commit(?![^|;&\r\n]*--amend)|merge\s+--ff-only)\b/.test(s));
-  const josepRepos = '/mnt/c/Repos/josep-repos', gitPath = path.resolve(gitDir);
-  const inJosepRepos = gitPath === josepRepos || gitPath.startsWith(josepRepos + path.sep);
-  for (const [name, re] of Object.entries(ask)) if (re.test(cmd) && !(name === 'git state change' && (trustedGit || inJosepRepos))) decide('ask', `${name}.`);
+  for (const [name, re] of Object.entries(ask)) if (re.test(cmd) && !(name === 'git state change' && trustedGit)) decide('ask', `${name}.`);
   if (secretRead.test(cmd)) decide('ask', 'command may print secret material.');
   if (/call_aws/i.test(tool) && /--profile[\s=]+prod\b/.test(cmd)) decide('ask', 'AWS MCP call against prod.');
 
