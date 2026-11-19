@@ -8,18 +8,21 @@ Dialog by system: WSL or Windows (powershell.exe), macOS (osascript), Linux (zen
 Only the WSL/Windows branch has been run; the others are untested.
 """
 import argparse
+import base64
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 WINDOWS_DIALOG = r"""
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 $f = New-Object System.Windows.Forms.Form
 $f.Text = 'ai-knowledge'; $f.Width = 460; $f.Height = 240; $f.StartPosition = 'CenterScreen'
 $l = New-Object System.Windows.Forms.Label
-$l.Text = '__LABEL__'; $l.Left = 10; $l.Top = 10; $l.Width = 430; $l.Height = 90
+$l.Text = [IO.File]::ReadAllText($args[0], [Text.Encoding]::UTF8); $l.Left = 10; $l.Top = 10; $l.Width = 430; $l.Height = 90
 $t = New-Object System.Windows.Forms.TextBox
 $t.UseSystemPasswordChar = $true; $t.Left = 10; $t.Top = 105; $t.Width = 430
 $c = New-Object System.Windows.Forms.CheckBox
@@ -39,13 +42,29 @@ def is_wsl():
         return False
 
 
+def ask_windows(label):
+    """Writes the dialog script and the label to temp files, then runs PowerShell on the script file.
+    Passing the script on the command line breaks on quotes and newlines; a file does not."""
+    workdir = Path(tempfile.mkdtemp(prefix="ak-dialog-"))
+    try:
+        script_file = workdir / "dialog.ps1"
+        label_file = workdir / "label.txt"
+        script_file.write_text(WINDOWS_DIALOG, encoding="utf-8-sig")
+        label_file.write_text(label.replace("\n", " · "), encoding="utf-8")
+        win = lambda path: subprocess.run(["wslpath", "-w", str(path)], capture_output=True, text=True).stdout.strip()
+        out = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-STA", "-File", win(script_file), win(label_file)],
+            capture_output=True, text=True, encoding="utf-8", check=False)
+        if out.returncode != 0 and out.stderr.strip():
+            sys.exit(f"Windows dialog failed: {out.stderr.strip()[:300]}")
+        return out.stdout.strip()
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
 def ask_secret(label):
     if is_wsl() and shutil.which("powershell.exe"):
-        text = label.replace("\n", " · ").replace("'", "''")
-        script = WINDOWS_DIALOG.replace("__LABEL__", text)
-        out = subprocess.run(["powershell.exe", "-NoProfile", "-STA", "-Command", script],
-                             capture_output=True, text=True, check=False)
-        return out.stdout.strip()
+        return ask_windows(label)
     if sys.platform == "darwin":
         script = f'display dialog "{label}" default answer "" with hidden answer with title "ai-knowledge"'
         out = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, check=False)
@@ -72,16 +91,23 @@ def main():
     parser.add_argument("--file", required=True)
     parser.add_argument("--key", required=True)
     parser.add_argument("--label", default="Pega el valor y pulsa Guardar")
+    parser.add_argument("--base64-user", action="store_true",
+                        help="store base64(':' + value), as Azure DevOps MCP expects")
+    parser.add_argument("--also", help="also store the same value under this variable (vSphere)")
     args = parser.parse_args()
 
     value = ask_secret(f"{args.key}: {args.label}")
     if not value:
         sys.exit("Empty value or dialog cancelled: nothing saved.")
 
+    stored = base64.b64encode(f":{value}".encode()).decode() if args.base64_user else value
     path = Path(os.path.expanduser(args.file))
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     text = path.read_text(encoding="utf-8") if path.exists() else ""
-    path.write_text(upsert(text, args.key, value), encoding="utf-8")
+    text = upsert(text, args.key, stored)
+    if args.also:
+        text = upsert(text, args.also, value)
+    path.write_text(text, encoding="utf-8")
     os.chmod(path, 0o600)
     print(f"Saved {args.key} in {path} (mode 600).")
 

@@ -4,6 +4,7 @@ declare module 'claude-code' {
       target: Shaped<string>
       name: Shaped<string>
       status: Shaped<string>
+      home: Shaped<string>
     }
   }
 }

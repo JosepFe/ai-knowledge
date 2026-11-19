@@ -11,11 +11,11 @@ const INFO: Record<string, string> = {
   'grafana-dev': 'Grafana dev: MCP de métricas, logs y trazas del entorno de desarrollo. Token de service account.',
   'grafana-prod': 'Grafana prod: MCP de métricas, logs y trazas de producción. Token de service account.',
   jfrog: 'JFrog: MCP de artefactos. Token de acceso de JFrog.',
-  ado: 'Azure DevOps: MCP de work items y repos. Token personal (usa el campo Valor).',
-  vsphere: 'vSphere: MCP de inventario de máquinas virtuales. Contraseña del usuario (usa el campo Valor).',
+  ado: 'Azure DevOps: MCP de work items y repos. Token personal.',
+  vsphere: 'vSphere: MCP de inventario de máquinas virtuales. Contraseña del usuario.',
 }
 
-// Presets fill the file and variable for an MCP token, with the same encoding as ai-config/mcp/set-mcp-secret.sh.
+// Presets fill the file and variable for an MCP token. The dialog applies the same encoding as ai-config/mcp/set-mcp-secret.sh.
 const PRESETS = [
   { label: 'gitlab', name: 'GITLAB_PERSONAL_ACCESS_TOKEN' },
   { label: 'ado', name: 'PERSONAL_ACCESS_TOKEN', base64: true },
@@ -28,21 +28,17 @@ const PRESETS = [
 const target = atom({ plugin: 'secret-entry', key: 'target' } as const, '', { shape: 'target-1' })
 const name = atom({ plugin: 'secret-entry', key: 'name' } as const, '', { shape: 'name-1' })
 const status = atom({ plugin: 'secret-entry', key: 'status' } as const, '', { shape: 'status-1' })
-
-// Sets or adds KEY=value and leaves every other line of the file as it is.
-const upsert = (text: string, key: string, value: string) => {
-  const lines = text.split('\n').filter(line => line !== '')
-  const found = lines.some(line => line.startsWith(`${key}=`))
-  const next = lines.map(line => (line.startsWith(`${key}=`) ? `${key}=${value}` : line))
-  return (found ? next : [...next, `${key}=${value}`]).join('\n') + '\n'
-}
+// Home folder, read once when the session starts: rendering must not run processes.
+const home = atom({ plugin: 'secret-entry', key: 'home' } as const, '', { shape: 'home-1' })
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'secrets',
-      description: 'Guardar una variable secreta en un fichero (.env o un token MCP) sin pasarla por el chat',
+      description: 'Guardar un secreto en un fichero (token de MCP o variable de un .env) en una ventana segura',
     })
+    const found = await $.process.run(['printenv', 'HOME'])
+    await update($, home, () => found.stdout.trim())
     void $.ui.open({ id: PANE, title: 'Secretos' })
 
     return next(e)
@@ -59,45 +55,18 @@ export const register: Register = on => {
     const file = await read($, target)
     const key = await read($, name)
     const message = await read($, status)
-    // Token files live in ai-knowledge's own folder, outside any repo.
-    const home = (await $.process.run(['printenv', 'HOME'])).stdout.trim()
-    const dir = `${home}/.config/ai-knowledge/local/mcp`
+    const dir = `${await read($, home)}/.config/ai-knowledge/local/mcp`
 
-    const save = async (raw: string) => {
-      const value = raw.trim()
-      if (file === '' || key === '') return update($, status, () => 'Indica el archivo y la variable antes del valor.')
-      if (value === '') return update($, status, () => 'Valor vacío: no se ha guardado nada.')
-
-      // Presets only apply when the file is the MCP token file of that preset.
-      const preset = PRESETS.find(p => file === `${dir}/${p.label}.env`)
-      let text = ''
-      try {
-        text = await $.fs.read(file)
-      } catch {
-        // Missing file: it is created with just this variable.
-      }
-
-      let updated = upsert(text, key, preset && 'base64' in preset ? btoa(`:${value}`) : value)
-      if (preset && 'extra' in preset) updated = upsert(updated, preset.extra, value)
-      if (preset) await $.process.run(['mkdir', '-p', '-m', '700', dir])
-      await $.fs.write(file, updated)
-
-      const mode = await $.process.run(['chmod', '600', file])
-      if (mode.exitCode !== 0) return update($, status, () => `Guardado, pero no se pudo poner 600: ${file}`)
-
-      update($, status, () => `Guardado ${key} en ${file}.`)
-    }
-
-    // Native masked dialog (scripts/secret_dialog.py in ai-knowledge). The value never comes back to this hook.
+    // The value is never typed in the panel: it is always asked in the secure dialog.
     const askWithDialog = async () => {
       if (file === '' || key === '') return update($, status, () => 'Indica el archivo y la variable antes.')
       const preset = PRESETS.find(p => file === `${dir}/${p.label}.env`)
-      if (preset && ('base64' in preset || 'extra' in preset)) {
-        return update($, status, () => 'Este preajuste necesita codificación: usa el campo Valor.')
-      }
       const service = preset ? INFO[preset.label] : 'Variable de un fichero de entorno.'
       const label = `${service}\nArchivo: ${file}\nVariable: ${key}\nPega el valor y pulsa Guardar.`
-      const run = await $.process.run(['python3', SECRET_DIALOG, '--file', file, '--key', key, '--label', label])
+      const args = ['python3', SECRET_DIALOG, '--file', file, '--key', key, '--label', label]
+      if (preset && 'base64' in preset) args.push('--base64-user')
+      if (preset && 'extra' in preset) args.push('--also', preset.extra)
+      const run = await $.process.run(args)
       update($, status, () => (run.exitCode === 0 ? run.stdout.trim() : `No se guardó: ${run.stderr.trim() || 'cancelado'}`))
     }
 
@@ -131,15 +100,7 @@ export const register: Register = on => {
           placeholder="NOMBRE_DE_LA_VARIABLE"
           onSubmit={v => update($, name, () => v.trim())}
         />
-        <Input
-          key="value"
-          label="Valor"
-          placeholder="Pega el valor y pulsa Enter"
-          submitLabel="Guardar"
-          autoFocus
-          onSubmit={v => save(v)}
-        />
-        <Button onPress={() => askWithDialog()}>Pedir con ventana segura</Button>
+        <Button variant="primary" onPress={() => askWithDialog()}>Pedir el valor en ventana segura</Button>
         {message !== '' && <Text dimColor>{message}</Text>}
         <Button role="dismiss" onPress={() => $.ui.close({ id: PANE })}>Cerrar</Button>
       </Box>
