@@ -2,6 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 const PANE = 'secret-entry'
+// Where the native dialog script lives: the ai-knowledge repo. Change it if the repo is cloned elsewhere.
+const SECRET_DIALOG = '/mnt/c/Repos/josep-repos/ai-knowledge/scripts/secret_dialog.py'
 
 // Presets fill the file and variable for an MCP token, with the same encoding as ai-config/mcp/set-mcp-secret.sh.
 const PRESETS = [
@@ -48,7 +50,7 @@ export const register: Register = on => {
     const key = await read($, name)
     const message = await read($, status)
     // Token files live in ai-knowledge's own folder, outside any repo.
-    const home = (await $.process.run(['sh', '-c', 'printf %s "$HOME"'])).stdout.trim()
+    const home = (await $.process.run(['printenv', 'HOME'])).stdout.trim()
     const dir = `${home}/.config/ai-knowledge/local/mcp`
 
     const save = async (raw: string) => {
@@ -74,6 +76,19 @@ export const register: Register = on => {
       if (mode.exitCode !== 0) return update($, status, () => `Guardado, pero no se pudo poner 600: ${file}`)
 
       update($, status, () => `Guardado ${key} en ${file}.`)
+    }
+
+    // Native masked dialog (scripts/secret_dialog.py in ai-knowledge). The value never comes back to this hook.
+    const askWithDialog = async () => {
+      if (file === '' || key === '') return update($, status, () => 'Indica el archivo y la variable antes.')
+      const preset = PRESETS.find(p => file === `${dir}/${p.label}.env`)
+      if (preset && ('base64' in preset || 'extra' in preset)) {
+        return update($, status, () => 'Este preajuste necesita codificación: usa el campo Valor.')
+      }
+      const run = await $.process.run([
+        'python3', SECRET_DIALOG, '--file', file, '--key', key, '--label', 'Pega el valor y pulsa Guardar',
+      ])
+      update($, status, () => (run.exitCode === 0 ? run.stdout.trim() : `No se guardó: ${run.stderr.trim() || 'cancelado'}`))
     }
 
     return (
@@ -114,6 +129,7 @@ export const register: Register = on => {
           autoFocus
           onSubmit={v => save(v)}
         />
+        <Button onPress={() => askWithDialog()}>Pedir con ventana segura</Button>
         {message !== '' && <Text dimColor>{message}</Text>}
         <Button role="dismiss" onPress={() => $.ui.close({ id: PANE })}>Cerrar</Button>
       </Box>
