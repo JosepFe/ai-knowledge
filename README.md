@@ -2,53 +2,26 @@
 
 **Make Claude Code use — and grow — your own notes.**
 
-A Claude Code plugin for knowledge management and research. Before researching anything, Claude searches your markdown notes; when it does research, it cites sources and saves what it verified back into your notes, with a date and a trust tag. Stale notes get re-checked, decisions can get two independent opinions, and your past sessions are mined to improve your setup. A hook warns you whenever a secret shows up in a tool's output.
+A Claude Code plugin for knowledge management and research. Before researching, Claude searches your markdown notes; verified findings are saved back into them with a source, a date and a trust tag. It also includes skills for usage reports, releases, commits, language practices and troubleshooting commands, plus a hook that warns when a secret shows up in a tool's output.
 
-Works with any folder of markdown notes: an Obsidian vault, a docs folder, a wiki checkout. Everything runs locally; nothing is sent anywhere except what Claude Code already sends.
+Works with any folder of markdown notes. Everything runs locally.
 
-Companion to [ai-kickstart](https://github.com/JosepFe/ai-kickstart) (building software). This one is about knowing things.
+Companion to [ai-kickstart](https://github.com/JosepFe/ai-kickstart), which is about building software.
 
----
+## Install
 
-## Getting started (5 minutes)
-
-### 1. Prerequisites
-
-| Need | Check | Install |
-|---|---|---|
-| [Claude Code](https://claude.com/claude-code) | `claude --version` | see the Claude Code docs |
-| Python 3.8+ (no packages needed) | `python3 --version` | Debian/Ubuntu `sudo apt install python3` · macOS `brew install python` · Windows: use WSL or [python.org](https://www.python.org/downloads/) |
-| A folder of markdown notes | — | any folder works, even an empty one to start |
-
-### 2. Install
-
-Inside Claude Code:
+Needs Claude Code and Python 3.8+ (no packages). Inside Claude Code:
 
 ```
 /plugin marketplace add JosepFe/ai-knowledge
 /plugin install ai-knowledge@ai-knowledge
 ```
 
-### 3. Configure (one-time questionnaire)
+Then start a session and say `set up ai-knowledge`. The one-time questionnaire asks which folders to search, where new notes go, the language, your note format, what must never be saved, and which hooks to enable. It writes `~/.config/ai-knowledge/config.json` and runs a test search.
 
-Start a new session and say:
+Until you configure it, the plugin only reminds Claude to suggest the setup.
 
-```
-set up ai-knowledge
-```
-
-Claude looks for your notes (Obsidian vaults, folders with many `.md` files) and asks one short round of questions:
-
-1. Which folders to search.
-2. Where new notes go when nothing fits.
-3. The language your notes are written in.
-4. Your note format: it reads a few notes and proposes what it sees (frontmatter, wikilinks, headings), or uses your own note-writing skill.
-5. What must never be saved (for example employer or client data). Secrets and personal data are always excluded.
-6. Which hooks you want.
-
-It writes `~/.config/ai-knowledge/config.json`, runs a test search and shows you the result. Run it again any time to change something. Until you configure it, the plugin only reminds Claude to suggest the setup.
-
-### 4. First steps
+## Use
 
 ```
 do I have notes on <topic>?
@@ -56,136 +29,63 @@ research whether <tool> supports <feature>
 compare <A> and <B> for <use case>, give me two opinions
 ```
 
-From now on, a verified fact found while working ends up in your notes, and Claude says so in one line: `Knowledge saved: <path>`.
+When Claude saves a fact, it says so in one line: `Knowledge saved: <path>`.
 
----
+## What it contains
 
-## How it works
-
-```
-question ─▶ search your notes (BM25) ─▶ found and fresh? ─▶ answer from your notes
-                     │ weak / stale
-                     ▼
-             research: primary sources, run it locally, cross-check
-                     ▼
-             answer with citations ─▶ save verified facts (source + date + trust tag)
-                                                   ▼
-             weak searches, stale notes, sessions ─▶ refresh notes / config-review proposals
-```
-
-### Trust tags
-
-Every saved fact carries one, so you know how much to rely on it:
-
-| Tag | Meaning |
-|---|---|
-| `verified YYYY-MM-DD` | Checked by running it or against the primary source |
-| `from <source> YYYY-MM-DD` | Copied from docs or a post, not checked |
-| `re-check` | Probably outdated |
-| `BROKEN YYYY-MM-DD: why` | No longer works; kept so nobody tries it again |
-
-Notes that go stale (versions, tools, comparisons) carry `Last reviewed: YYYY-MM-DD` under the title, so `knowledge-refresh` can find them.
-
-## What's included
-
-| Type | Name | What it does | Say |
-|---|---|---|---|
-| Skill | `setup` | The one-time questionnaire above | "set up ai-knowledge" |
-| Skill | `knowledge-search` | Keyword (BM25) search over your notes, ignoring accents and case; health signals (weak searches, stale notes, oversized files) | "do I have notes on X?" |
-| Skill | `research` | Notes first → sources → cross-check → cited answer → save findings. Quick, standard or deep | "research…", "compare X and Y" |
-| Skill | `save-knowledge` | Save a verified fact into the right note with source, date and trust tag; updates instead of duplicating | "save this" |
-| Skill | `knowledge-refresh` | Re-verify only notes past their review date or flagged `re-check` / `BROKEN` | "refresh my notes" |
-| Skill | `duel` | Two independent subagents (different models or stances), optional debate, a judge decides. About 3x the cost of one answer, so opt-in | "two opinions", "debate this" |
-| Skill | `config-review` | Mine past sessions for repeated work, your corrections, knowledge gaps, token waste and unused skills; ranked proposals | "what do we keep repeating?" |
-| Skill | `usage-report` | Tokens, time and process report from past sessions (by model, skill, subagent, branch, plugin version, leak signals), optional interactive HTML | "how many tokens did we use?", "compare periods" |
-| Skill | `release` | Choose major, minor or patch, write release notes from the commits since the last tag, and tag the merged commit after your approval | "new version", "release" |
-| Skill | `commits` | Conventional commit messages whose body feeds the release notes; never adds Claude attribution | "commit", "PR title" |
-| Skill | `languages` | Official practices and lint/format commands per language (C#, Go, TypeScript, Python, PowerShell/Bash, Terraform, Ansible) | "fix lint errors", "review this code" |
-| Skill | `troubleshooting-command-patterns` | Proven commands per technology (package managers, MCP in VS Code, TLS, WSL, PowerShell, parallel terminals) | "how do I X in Y", "an error seen before" |
-| Hook | SessionStart | Adds 4 short rules to each session: notes first, save what you verify, propose (don't apply) config changes, don't present unverified facts as verified. Plus your own rules | automatic |
-| Hook | PostToolUse | Warns `SECRET EXPOSED` when a token or private key appears in a tool call or its output; logs it masked (last 4 characters) | automatic |
-
-The skills also understand requests in Spanish.
-
-## What changes in your sessions
-
-- **Always on (if enabled)**: about 5 short lines of rules added at session start, and a millisecond-scale secret check after each tool call.
-- **Claude may write to your notes**: verified facts, without asking, always announced as `Knowledge saved: <path>`. Changes to skills, hooks or rules are only proposed and need your "yes".
-- **Nothing else** is installed or modified outside your notes and the plugin's own state folder.
-
-## Privacy and files
-
-| Path | Content |
-|---|---|
-| `~/.config/ai-knowledge/config.json` | Your settings (folders, language, rules) |
-| `~/.local/state/ai-knowledge/searches.log` | Your search queries and scores (to detect knowledge gaps) |
-| `~/.local/state/ai-knowledge/exposed-secrets.log` | Type, tool and last 4 characters of exposed secrets; never the value |
-
-All local. Delete them any time.
-
-## Configuration reference
-
-`~/.config/ai-knowledge/config.json` (see [`config.example.json`](config.example.json)):
-
-| Key | Default | Meaning |
+| Name | Type | What it does |
 |---|---|---|
-| `knowledge_dirs` | `[]` | Folders with your markdown notes, searched recursively |
-| `default_notes_dir` | `""` | Where new notes go when nothing fits |
-| `notes_language` | `""` | Language of new notes |
-| `note_conventions` | `""` | How your notes look (frontmatter, links, headings) |
-| `save_with` | `""` | Name of your own skill that writes notes your way; `save-knowledge` follows it |
-| `extra_rules` | `[]` | Your own always-on rules |
-| `session_rules`, `secret_scan` | `true` | Turn each hook on or off |
-| `weak_score` | `4.0` | Upper limit: a best score below this counts as a knowledge gap |
-| `weak_ratio` | `0.3` | The bar is the lower of `weak_score` and this share of the best score the query could reach. Small collections score lower, so a fixed 4.0 would flag every search as weak |
-| `min_coverage` | `0.5` | With 2+ keywords, if no top-5 result holds this share of them, the search is weak (one common word scoring high is not an answer) |
-| `max_note_kb` | `16` | Notes above this size are flagged |
-| `ai_config_dir` | `""` | Path of your `ai-config` clone; used only by `mcp_status.py` |
-| `exclude` | `.obsidian`, `.git`… | Folder names skipped when searching |
+| `setup` | skill | One-time questionnaire and test search |
+| `knowledge-search` | skill | Keyword search over your notes, with health signals (weak searches, stale notes) |
+| `research` | skill | Notes first, then sources, cross-check and a cited answer; saves what it verified |
+| `save-knowledge` | skill | Saves a verified fact with source, date and trust tag; updates instead of duplicating |
+| `knowledge-refresh` | skill | Re-verifies only notes past their review date or flagged `re-check` / `BROKEN` |
+| `duel` | skill | Two independent opinions and a judge. About 3x the cost, so opt-in |
+| `config-review` | skill | Mines past sessions for repeated work, corrections and token waste; ranked proposals |
+| `usage-report` | skill | Tokens, time and processes from past sessions, with periods, versions and HTML |
+| `release` | skill | Picks the version bump, writes release notes from commits, tags after your approval |
+| `commits` | skill | Conventional commit messages whose body feeds the release notes |
+| `languages` | skill | Official practices and lint/format commands per language |
+| `troubleshooting-command-patterns` | skill | Proven commands per technology |
+| SessionStart | hook | Adds a few short rules to each session |
+| PostToolUse | hook | Warns `SECRET EXPOSED` when a token appears in a tool's output; logs it masked |
+| `mods/secret-entry` | mod | `/secrets` panel to save one value into any file. See [docs/mcp-and-secrets.md](docs/mcp-and-secrets.md) |
+
+Trust tags on saved facts: `verified YYYY-MM-DD`, `from <source> YYYY-MM-DD`, `re-check`, `BROKEN YYYY-MM-DD: why`.
+
+## Configuration
+
+Settings live in `~/.config/ai-knowledge/config.json`. The full list is in [config.example.json](config.example.json). The keys you are most likely to change:
+
+| Key | Meaning |
+|---|---|
+| `knowledge_dirs` | Folders with your notes, searched recursively |
+| `default_notes_dir` | Where new notes go when nothing fits |
+| `notes_language`, `note_conventions` | Language and layout of your notes |
+| `save_with` | Your own skill that writes notes your way |
+| `extra_rules` | Your own always-on rules |
+| `weak_score`, `weak_ratio`, `min_coverage` | When a search counts as a knowledge gap |
+| `session_rules`, `secret_scan` | Turn each hook on or off |
+
+## Privacy
+
+Everything stays on your machine:
+
+- `~/.config/ai-knowledge/config.json`: your settings.
+- `~/.local/state/ai-knowledge/searches.log`: your search queries and scores.
+- `~/.local/state/ai-knowledge/exposed-secrets.log`: type and last 4 characters of an exposed secret. Never the value.
+
+Claude writes to your notes only verified facts, and announces each one. Changes to skills, hooks or rules are proposed and need your approval.
 
 ## Command-line tools
 
-The skills run these for you; they are also handy directly:
-
 ```bash
 K=$(ls -d ~/.claude/plugins/cache/ai-knowledge/ai-knowledge/*/scripts | tail -1)
-python3 $K/kb.py traefik certificate      # search
+python3 $K/kb.py <keywords>               # search
 python3 $K/kb.py --misses 30              # weak searches in the last 30 days
-python3 $K/kb.py --stale 180              # notes not reviewed in 6 months + re-check/BROKEN facts
-python3 $K/kb.py --stats                  # oversized notes, long skills, always-on text
-python3 $K/sessions.py 2026-11-01         # digest of your sessions since a date
-python3 $K/usage.py 2026-11-01 --md       # tokens by model and project, active vs waiting time (numbers only)
+python3 $K/kb.py --stale 180              # notes not reviewed recently
+python3 $K/usage.py 2026-11-01 --md       # tokens and time since a date (numbers only)
 ```
-
-## MCP servers and a new machine
-
-`scripts/mcp_status.py` is read-only. It lists the MCP servers defined in `ai-config` and shows whether each one is in Claude Code and whether its token file exists. It never reads or prints a token.
-
-```bash
-python3 $K/mcp_status.py          # needs "ai_config_dir" in config.json
-```
-
-Checklist for a new computer:
-
-1. Clone `ai-config` and run `node claude/install.js --mcp=common` (groups in `mcp/groups.json`).
-2. Install this plugin (`/plugin marketplace add JosepFe/ai-knowledge`, then `/plugin install ai-knowledge@ai-knowledge`) and run "set up ai-knowledge" to write this machine's paths.
-3. Save each token on this machine with `/secrets` or `mcp/set-mcp-secret.sh <server>`. Tokens are never copied between machines.
-4. Restart the session and run `/mcp`. `mcp_status.py` should show `yes` in both columns for the servers you use.
-
-## Secret entry panel (mods/secret-entry)
-
-`mods/secret-entry` is a Claude Code mod, not a skill. It adds a `/secrets` command that opens a panel to save one secret value into any file, for example a project's `.env`:
-
-1. Type the file path (absolute, WSL form such as `/mnt/c/...`).
-2. Type the variable name.
-3. Paste the value and press Enter.
-
-Only that variable changes; every other line of the file is kept, and the file is set to mode 600. The value never goes through the chat.
-
-- The MCP buttons fill the file and variable for a token in `ai-config/local/mcp`, with the same encoding as `mcp/set-mcp-secret.sh`.
-- The value field shows what you type, unlike the terminal prompt. Use the terminal script for anything you would rather not see on screen.
-- The MCP folder is hardcoded to `/mnt/c/Repos/ai-config/local/mcp`. Change `MCP_DIR` in `hooks/register.tsx` on another machine.
-- Loading it needs the mods setting turned on in Claude Code. Claude asks once.
 
 ## Updating and uninstalling
 
@@ -194,17 +94,17 @@ Only that variable changes; every other line of the file is kept, and the file i
 /plugin uninstall ai-knowledge@ai-knowledge
 ```
 
-Uninstalling leaves your notes and `~/.config/ai-knowledge/` untouched; delete that folder and `~/.local/state/ai-knowledge/` if you want everything gone.
+Uninstalling keeps your notes and `~/.config/ai-knowledge/`. Delete those folders too if you want everything gone.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| "ai-knowledge is installed but not configured" | Run "set up ai-knowledge" |
-| Searches find nothing useful | Use the words your notes use (tool names, error text), in your notes' language; check `knowledge_dirs` |
-| Too many `WEAK` searches, or none | Adjust `weak_score` or `min_coverage` (`kb.py --misses` shows the history) |
-| `SECRET EXPOSED` on an example token | Expected when example text uses the real token format; rotate if it was real |
-| Hooks not running | `python3` must be on the `PATH` Claude Code sees; restart the session after installing |
+| "installed but not configured" | Run "set up ai-knowledge" |
+| Searches find nothing useful | Use the words your notes use, in their language; check `knowledge_dirs` |
+| Too many `WEAK` searches, or none | Adjust `weak_score` or `min_coverage`; `kb.py --misses` shows the history |
+| `SECRET EXPOSED` on an example token | Expected with example text; rotate only if the token was real |
+| Hooks not running | `python3` must be on the `PATH` Claude Code sees; restart the session |
 
 ## License
 
