@@ -94,7 +94,19 @@ def main():
     parser.add_argument("--base64-user", action="store_true",
                         help="store base64(':' + value), as Azure DevOps MCP expects")
     parser.add_argument("--also", help="also store the same value under this variable (vSphere)")
+    parser.add_argument("--detach", action="store_true",
+                        help="return at once; the dialog keeps running and saves the value by itself")
     args = parser.parse_args()
+
+    if args.detach:
+        # The panel waits only for this call. The dialog runs in a detached child that saves the value.
+        child_args = [sys.executable, __file__] + [a for a in sys.argv[1:] if a != "--detach"]
+        log = Path(os.path.expanduser("~/.local/state/ai-knowledge/secret-dialog.log"))
+        log.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with open(log, "a", encoding="utf-8") as logf:
+            subprocess.Popen(child_args, start_new_session=True, stdout=logf, stderr=logf)
+        print(f"Ventana abierta para {args.key}. Pega el valor allí; se guarda sola en {args.file}.")
+        return
 
     value = ask_secret(f"{args.key}: {args.label}")
     if not value:

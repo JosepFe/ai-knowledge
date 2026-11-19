@@ -63,7 +63,7 @@ export const register: Register = on => {
       const preset = PRESETS.find(p => file === `${dir}/${p.label}.env`)
       const service = preset ? INFO[preset.label] : 'Variable de un fichero de entorno.'
       const label = `${service}\nArchivo: ${file}\nVariable: ${key}\nPega el valor y pulsa Guardar.`
-      const args = ['python3', SECRET_DIALOG, '--file', file, '--key', key, '--label', label]
+      const args = ['python3', SECRET_DIALOG, '--detach', '--file', file, '--key', key, '--label', label]
       if (preset && 'base64' in preset) args.push('--base64-user')
       if (preset && 'extra' in preset) args.push('--also', preset.extra)
       const run = await $.process.run(args)
