@@ -9,7 +9,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 from common import load_config, state_file  # noqa: E402
 
-if not load_config()["secret_scan"]:
+CFG = load_config()
+if not CFG["secret_scan"]:
     sys.exit(0)
 
 PATTERNS = {
@@ -40,6 +41,22 @@ tool = event.get("tool_name", "?")
 with open(state_file("exposed-secrets.log"), "a", encoding="utf-8") as f:
     for h in hits:
         f.write(f"{dt.datetime.now().isoformat(timespec='seconds')}\t{tool}\t{h}\tROTATE\n")
+if CFG.get("security_note"):
+    note = Path(CFG["security_note"]).expanduser()
+    if not note.exists():
+        note.parent.mkdir(parents=True, exist_ok=True)
+        note.write_text(
+            "---\ntype: analysis\ntitle: \"Secretos expuestos\"\n"
+            "description: \"Registro de secretos expuestos en herramientas, con estado de rotación\"\n"
+            "tags: [security, secrets, log]\n"
+            f"timestamp: {dt.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}\nstatus: active\n---\n\n"
+            "# Secretos expuestos\n\nSolo tipo y últimos 4 caracteres, nunca el valor. Cambia `pendiente de rotar` a `rotado` cuando lo hagas.\n\n"
+            "| Fecha | Herramienta | Tipo | Últimos 4 | Estado |\n|---|---|---|---|---|\n",
+            encoding="utf-8")
+    with open(note, "a", encoding="utf-8") as f:
+        for h in hits:
+            kind, _, last4 = h.partition(" (...")
+            f.write(f"| {dt.datetime.now():%Y-%m-%d %H:%M} | {tool} | {kind} | {last4.rstrip(')')} | pendiente de rotar |\n")
 msg = f"SECRET EXPOSED in {tool}: {', '.join(hits)}. Rotate it. Logged masked in ~/.local/state/ai-knowledge/exposed-secrets.log"
 print(json.dumps({
     "systemMessage": msg,
