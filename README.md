@@ -47,6 +47,8 @@ When Claude saves a fact, it says so in one line: `Knowledge saved: <path>`.
 | `commits` | skill | Conventional commit messages whose body feeds the release notes |
 | `languages` | skill | Official practices and lint/format commands per language |
 | `troubleshooting-command-patterns` | skill | Proven commands per technology |
+| `explorer` | agent | Haiku, read-only: reads docs, logs and repos, returns a short report |
+| `implementer` | agent | Sonnet, files only (no Bash): writes code, config or diagrams from a closed brief |
 | SessionStart | hook | Adds a few short rules to each session |
 | PostToolUse | hook | Warns `SECRET EXPOSED` when a token appears in a tool's output; logs it masked |
 | `mods/secret-entry` | mod | `/secrets` panel to save one value into any file. See [docs/mcp-and-secrets.md](docs/mcp-and-secrets.md) |
